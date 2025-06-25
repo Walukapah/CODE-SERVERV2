@@ -3,11 +3,12 @@ FROM codercom/code-server:latest
 
 # Set environment variables
 ENV USER=coder
-ENV PASSWORD=waluka  
+ENV PASSWORD=waluka
 # Set empty password by default (use docker secrets for production)
 ENV SHELL=/bin/bash
 ENV DOCKER_USER=${USER}
 ENV HOME=/home/coder
+ENV VENV_PATH=/home/coder/venv
 
 # Install additional system packages
 RUN sudo apt-get update && \
@@ -26,6 +27,7 @@ RUN sudo apt-get update && \
     python3 \
     python3-pip \
     python3-venv \
+    python3-full \
     nodejs \
     npm \
     yarn \
@@ -34,6 +36,24 @@ RUN sudo apt-get update && \
     openssh-client \
     && sudo apt-get clean && \
     sudo rm -rf /var/lib/apt/lists/*
+
+# Create and activate Python virtual environment
+RUN python3 -m venv ${VENV_PATH} && \
+    . ${VENV_PATH}/bin/activate && \
+    pip install --upgrade pip
+
+# Install Python tools in virtual environment
+RUN . ${VENV_PATH}/bin/activate && \
+    pip install --no-cache-dir \
+    setuptools \
+    wheel \
+    virtualenv \
+    pylint \
+    black \
+    flake8 \
+    pytest \
+    ipython \
+    jupyter
 
 # Install Docker CLI (for Docker-in-Docker setups)
 RUN curl -fsSL https://get.docker.com | sh && \
@@ -49,19 +69,6 @@ RUN sudo npm install -g \
     vue-cli \
     nodemon \
     && sudo npm cache clean --force
-
-# Install Python tools
-RUN sudo pip3 install --no-cache-dir --upgrade \
-    pip \
-    setuptools \
-    wheel \
-    virtualenv \
-    pylint \
-    black \
-    flake8 \
-    pytest \
-    ipython \
-    jupyter
 
 # Install VS Code extensions
 RUN code-server --install-extension \
@@ -84,6 +91,9 @@ RUN code-server --install-extension \
 
 # Configure workspace settings
 COPY --chown=${USER}:${USER} settings.json /home/coder/.local/share/code-server/User/settings.json
+
+# Add virtual environment activation to .bashrc
+RUN echo "source ${VENV_PATH}/bin/activate" >> /home/coder/.bashrc
 
 # Set up workspace directory
 WORKDIR /home/coder/project
