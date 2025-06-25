@@ -3,7 +3,7 @@ FROM codercom/code-server:latest
 
 # Set environment variables
 ENV USER=coder
-ENV PASSWORD=  # Set empty password by default (use docker secrets for production)
+ENV PASSWORD=waluka  # Set empty password by default (use docker secrets for production)
 ENV SHELL=/bin/bash
 ENV DOCKER_USER=${USER}
 ENV HOME=/home/coder
